@@ -504,6 +504,23 @@
     else if(!musicOn && bgmTimer){ clearTimeout(bgmTimer); bgmTimer = null; }
   });
 
+  // 画面が非表示になったら(タブ切り替え/アプリのバックグラウンド化)音を止め、
+  // 復帰したら再開する。Androidラッパー側からも window.__appPauseAudio/__appResumeAudio を呼べる。
+  function pauseAllAudio(){
+    if(bgmTimer){ clearTimeout(bgmTimer); bgmTimer = null; }
+    if(audioCtx && audioCtx.state === 'running'){ audioCtx.suspend(); }
+  }
+  function resumeAllAudio(){
+    if(!audioCtx) return;
+    if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
+    if(musicOn && !bgmTimer){ playMelodyLoop(); }
+  }
+  window.__appPauseAudio = pauseAllAudio;
+  window.__appResumeAudio = resumeAllAudio;
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden){ pauseAllAudio(); } else { resumeAllAudio(); }
+  });
+
   /* ---------------- helpers ---------------- */
   function shuffle(arr){
     const a = arr.slice();
